@@ -21,6 +21,10 @@
  ******************************************************************************/
 #define UMBRAL_PORCENTAGE 100
 #define TIMEOUT_COUNT 5000
+#define LED_NORMAL 1
+#define LED_ERROR 0
+#define CONECTADO 1
+#define DESCONECTADO 0
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -58,33 +62,36 @@ void main (void)
     boardInit();   
     timer_set_init();
     systemInitLast();
-    statusLed_init();
 
+    uart_init();
+    conectionStatus_init();
 
     for(;;)
         AppRun();
 } // NO TOCAR
 
 void appInit(void){
-    int conexion = 0;
+    int conexion = DESCONECTADO;
     int contador = 0;
     while (contador < TIMEOUT_COUNT || conexion)   //primer comunicarse con la compu por uart
     {
         contador++;
         if (check_comm())
         {
-            statusLed(1);
+           LED_status(LED_NORMAL);
 
-           // setpoint = get_setpoint();
-           // histeresis = get_histeresis();
-           // intMuestreo = get_intMuestreo();
-            conexion = 1;
+           char *setpoint = get_setpoint();
+           char *histeresis = get_histeresis();
+           char *intMuestreo = get_intMuestreo();
+           conexion = CONECTADO;
         }
     }
-
+    // SI no se conecta, lectura de eeprom
     if (!check_comm())
     {
-        statusLed(0);
+        LED_status(LED_ERROR);
+
+
         //si falla la comunicacion leer la eprom
     }
 

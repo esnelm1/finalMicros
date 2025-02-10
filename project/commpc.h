@@ -29,6 +29,13 @@
 /*******************************************************************************
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
+void print_temperature(void);
+void print_heater_state(void);
+char* get_setpoint(void);
+char* get_histeresis(void);
+char* get_intMuestreo(void);
+void conectionStatus_init(void);
+void statusLed(int value);
 
 /*******************************************************************************
  ******************************************************************************/

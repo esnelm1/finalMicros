@@ -30,6 +30,7 @@ con una interfaz de matlab. Hay que ver como hacer que sea robusta y no pierda d
 /*******************************************************************************
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
+static char* get_numeros(char *var, char *sf);
 
 /*******************************************************************************
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
@@ -82,54 +83,33 @@ void print_heater_state()
     uart_put_char(FINISH_MESSAGE); //con CR
 }
 
-char get_setpoint()
+char* get_setpoint()
 {
-    char sp[] = get_numeros(uart_get_char(),"SP")
+    char *sp = get_numeros(uart_get_char(),"SP");
     return sp;
 }
 
-char get_histeresis()
+char* get_histeresis()
 {
-    char h[] = get_numeros(uart_get_char(),"H")
+    char *h = get_numeros(uart_get_char(),"H");
     return h;
 }
 
-char get_intMuestreo()
+char* get_intMuestreo()
 {
-    char im[] = get_numeros(uart_get_char(),"IM")
+    char *im = get_numeros(uart_get_char(),"IM");
     return im;
 }
 
 
-
-char get_numeros(char *var, char *sf) {
-    // Buffer estático para almacenar los números
-    char numeros[10];
-
-    // Buscar el sufijo en la cadena
-    char *pos = strstr(var, sf);
-    if (pos != NULL) {
-        // Extraer los números antes del sufijo
-        size_t len = pos - var; // Longitud de los números
-        strncpy(numeros, var, len);
-        numeros[len] = '\0'; // Agregar terminador nulo
-    } else {
-        // Si no se encuentra el sufijo, considerar todo como números
-        strcpy(numeros, var);
-        printf("No coinciden con el sufijo %s",sf);
-        return;
-    }
-    return numeros; // Devolver los números
-}
-
-
-void statusLed_init(void){
+void conectionStatus_init(void)
+{
     gpioMode(LED_STATUS,OUTPUT);
     gpioWrite(LED_STATUS,LOW);
 }
 
 
-void statusLed(int value){
+void LED_status(int value){
     switch (value)
         {
         case 0: //funcionamiento error
@@ -142,27 +122,35 @@ void statusLed(int value){
         }
 }
 
-//void uart_handle_command() {
-//    if (strncmp(cmd, "SET:", 4) == 0) {
-//        int sp, h, si;
-//        if (sscanf(cmd, "SET: SP = %d, H = %d, SI = %d", &sp, &h, &si) == 3) {
-//            // Guardamos los valores en variables globales o estructuras
-//            setPoint = sp;
-//            histeresis = h;
-//            intervalo_muestreo = si;
-//
-//            uart_put_char("SET_OK\n");
-//        } else {
-//            uart_put_char("SET_ERR\n");
-//        }
-//    } else {
-//        uart_put_char("CMD_ERR\n");
-//    }
-//}
 
+// LOCAL
 
+static char* get_numeros(char *var, char *sf) {
+    // Verificar que los punteros no sean nulos
+    if (var == NULL || sf == NULL) {
+        return NULL;
+    }
 
+    // Buscar el sufijo en la cadena
+    char *pos = strstr(var, sf);
+    if (pos != NULL) {
+        // Extraer los números antes del sufijo
+        size_t len = pos - var; // Longitud de los números
 
+        // Reservar memoria dinámica
+        char *numeros = (char*)malloc((len + 1) * sizeof(char));
+        if (numeros == NULL) {
+            return NULL; // Si falla la asignación de memoria
+        }
+
+        strncpy(numeros, var, len);
+        numeros[len] = '\0'; // Agregar terminador nulo
+        return numeros; // Retornar puntero a memoria dinámica
+    } else {
+        printf("No coinciden con el sufijo %s\n", sf);
+        return NULL; // Devolver NULL si no hay coincidencia
+    }
+}
 
 /******************************************************************************/
 

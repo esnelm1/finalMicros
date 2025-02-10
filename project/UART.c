@@ -28,10 +28,15 @@
 #define MAX_SCALE 255
 #define MAX_VOLTAJE 3300
 
-#define HANDSHAKE_CMD 'H'
-#define TEMP_CMD 'T'
-#define HEATER_CMD 'S'
+#define NEW_LINE 10         //ASCII for new line
+#define FINISH_MESSAGE 13   //ASCII for finish transmition --> CR (Carriage return)
+#define MAX_MESSAGES 15
 
+//type of messages
+enum
+{
+    RAW_MESSAGE, VOLTAGE_MESSAGE
+};
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -44,8 +49,12 @@
 /*******************************************************************************
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
-void uart_send_temperature(void)
-void uart_send_heater_state(void)
+
+static int getTXStatus(void);
+static int getRXStatus(void);
+void uart_put_char(char message);
+char uart_get_char(void);
+
 /*******************************************************************************
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
@@ -68,7 +77,7 @@ void uart_init(void)
     P1SEL |= PIN_UART_TX;
     P1SEL2 |= PIN_UART_TX;
 
-    // micellaneos 
+    // micellaneos - VERIFICAR, ES DISTINTO A LO DE JACOBY
     UCA0CTL1 = UCSWRST;   //Reset state
     UCA0CTL0 &= ~UCPEN;   //parity not enabled
     UCA0CTL0 &= ~UCMSB;   //LSB first
@@ -85,53 +94,57 @@ void uart_init(void)
 
 }
 
-void uart_send_string(const char *str) {
-    while (*str) {
-        while (!(IFG2 & TX_EMPTY));
-        TX_BUFFER = *str++;
-    }
+
+void uart_put_char(char message)
+{
+    while (getTXStatus() != TX_EMPTY) // USCI_A0 TX buffer ready?
+        TX_BUFFER = message;
+    uart_finish(message);
+}
+
+char uart_get_char(void)
+{
+    unsigned char rxdata;
+    while (getRXStatus())
+     {
+        PullQueue(&rxdata);          //pulls data from buffer and assigns it to rxdata pointer
+     }
+    return rxdata;
 }
 
 
-static void uart_handle_command(char *cmd) {
-    if (strncmp(cmd, "SET:", 4) == 0) {
-        int sp, h, si;
-        if (sscanf(cmd, "SET: SP = %d, H = %d, SI = %d", &sp, &h, &si) == 3) {
-            // Guardamos los valores en variables globales o estructuras
-            setPoint = sp;
-            histeresis = h;
-            intervalo_muestreo = si;
-            
-            uart_send_string("SET_OK\n");
-        } else {
-            uart_send_string("SET_ERR\n");
-        }
-    } else {
-        uart_send_string("CMD_ERR\n");
-    }
-}
+
 /*******************************************************************************
  LOCAL FUNCTION DEFINITIONS
  *******************************************************************************
  ******************************************************************************/
+static void uart_finish(void)
+{
+    while (getTXStatus() != TX_EMPTY) // USCI_A0 TX buffer ready?
+        TX_BUFFER = FINISH_MESSAGE;
+}
 
 
-void uart_send_temperature(void) {
-    char buffer[20];
-    float temp = temp_ReadTemperature();
-    int state = calefactor_status();
-    snprintf(buffer, sizeof(buffer), "%.2f,%d\n", temp,state);
-    uart_send_string(buffer);
+static int getTXStatus(void)
+{
+    return (IFG2 & TX_EMPTY);         //check s that TX buffer is empty and UART flag is set
+}
+
+
+static int getRXStatus(void)
+{
+    return (QueueStatus());          //returns buffer status
+
 }
 
 
 #pragma vector=USCIAB0RX_VECTOR
-__interrupt void uart_rx_isr(void) {
-    if (IFG2 & RX_FULL) {
-        char cmd = RX_BUFFER;
-        PushQueue(cmd);
-        uart_handle_command(cmd);
-        IFG2 &= ~RX_FULL;
+__interrupt void uart_rx_isr(void)
+{
+    if (IFG2 &RX_FULL)
+    {   
+        PushQueue (RX_BUFFER);       //checks dedicated flag   
+        IFG2 &= ~RX_FULL;            //sets local flag
     }
 }
 
