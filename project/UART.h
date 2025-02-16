@@ -17,8 +17,9 @@
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE 
  ******************************************************************************/
-
-
+#define NEW_LINE 10         //ASCII for new line
+#define FINISH_MESSAGE 13   //ASCII for finish transmition --> CR (Carriage return)
+#define MAX_MESSAGES 15
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -33,6 +34,8 @@
  ******************************************************************************/
 void uart_init(void);
 void uart_set_message(unsigned long);
+void uart_put_char(char message);
+char uart_get_char(void);
 
 
 /*******************************************************************************

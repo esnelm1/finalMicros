@@ -29,8 +29,8 @@
 #define SWITCH_ACTIVE       LOW
 
 // UART pins(hardware USCI_A)
-#define PIN_UART_RX   (1<<1)//DO NOT SET WITH PORTNUM2PIN(1,1)
-#define PIN_UART_TX   (1<<2)//DO NOT SET WITH PORTNUM2PIN(1,2)
+#define PIN_UART_RX   BIT1 //DO NOT SET WITH PORTNUM2PIN(1,1)
+#define PIN_UART_TX   BIT2 //DO NOT SET WITH PORTNUM2PIN(1,2)
 
 // I2C pins(hardware USCI_B)
 #define PIN_I2C_SCL   (1<<6) //1.6 //DO NOT SET WITH PORTNUM2PIN
@@ -42,6 +42,9 @@
 
 // Led Status pin
 #define LED_STATUS PORTNUM2PIN(2,3) //2.3
+
+// Pin Green LED Timer
+#define PIN_LED_GREEN PORTNUM2PIN(2,2)  // Lo DEFINI RECIEN
 
 
 // PWM PIN

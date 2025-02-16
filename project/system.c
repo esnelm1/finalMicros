@@ -12,7 +12,7 @@
 #include "board.h"
 #include "hardware.h"
 #include "timer.h"
-
+#include "gpio.h"
 #include "pwm.h"
 #include "UART.h"
 #include "onewire.h"
@@ -55,7 +55,7 @@ void systemInitFirst(void)
 {
     WDTCTL = WDTPW | WDTHOLD; // stop watchdog timer
 
-    // Configure DCO
+//     Configure DCO
     DCOCTL = 0;
 #if DCOCLK_FREQ_HZ == 1000000UL
     BCSCTL1 = CALBC1_1MHZ;
@@ -66,7 +66,7 @@ void systemInitFirst(void)
 #elif DCOCLK_FREQ_HZ == 12000000UL
     BCSCTL1 = CALBC1_12MHZ;
     DCOCTL = CALDCO_12MHZ;
-#elif DCOCLK_FREQ_HZ == 61000000UL
+#elif DCOCLK_FREQ_HZ == 16000000UL
     BCSCTL1 = CALBC1_16MHZ;
     DCOCTL = CALDCO_16MHZ;
 #else
@@ -74,17 +74,17 @@ void systemInitFirst(void)
 #endif
 
     // Configure MCLK and SMCLK
-    BCSCTL2 = SELM_0 | (MCLK_PRESCALER_2POW<<4) | (SMCLK_PRESCALER_2POW<<4);
+    BCSCTL2 = SELM_0 | (MCLK_PRESCALER_2POW<<4) | (SMCLK_PRESCALER_2POW<<1);
 }
 
 
 void boardInit(void)
 {
     uart_init();
-    oneWire_init();
-    i2c_init();
-    spi_init();
-    pwm_init();
+    //oneWire_init();
+    //i2c_init();
+    //spi_init();
+    //pwm_init();
  
 }
 
@@ -98,7 +98,9 @@ void timer_set_init(void){
 
 void systemInitLast(void)
 {
-    enable_interrupts();  // Enable General interrupts
+    //WDTCTL = WDT_MDLY_0_5; // Watchdog timer interval mode; intervalo seleccionado, 0.5ms entre interrupciones del watchdog
+    //IE1 |= WDTIE; // Habilitar el bit WDTIE, habilitar interrupciones del watchdog
+    enable_interrupts(); // Habilitar interrupciones generales
 }
 
 

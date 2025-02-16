@@ -14,6 +14,12 @@ con una interfaz de matlab. Hay que ver como hacer que sea robusta y no pierda d
 #include "commpc.h"
 #include "UART.h"
 #include "calefactor.h"
+#include "board.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -31,6 +37,7 @@ con una interfaz de matlab. Hay que ver como hacer que sea robusta y no pierda d
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
 static char* get_numeros(char *var, char *sf);
+void uart_read_line(char *buffer, size_t size);
 
 /*******************************************************************************
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
@@ -54,31 +61,25 @@ static char* get_numeros(char *var, char *sf);
  *******************************************************************************
  ******************************************************************************/
 
-char check_comm()
+
+char check_comm(void)
 {
-    char checker = uart_get_char(); //Matlab manda un 1 para establecer comm.
-    char message = 1;
-    if(checker == 1)
-    {
-        return message;
-    } else   // No llega el mensaje
-    {
-        return !(message);
-    }
+    unsigned char message = uart_get_char();
+    return (message == 0x01);  //Recibe dato en ascii
 }
 
 void print_temperature()
 {
-    char value = readTemperatura();
-    uart_put_char(value);
+    //char value = readTemperatura();
+    //uart_put_char(value);
     uart_put_char('T');
     uart_put_char(FINISH_MESSAGE); //con CR
 }
 
 void print_heater_state()
 {
-    char value = calefactor_status();
-    uart_put_char(value);
+    //char value = calefactor_status();
+    //uart_put_char(value);
     uart_put_char('C');
     uart_put_char(FINISH_MESSAGE); //con CR
 }
@@ -102,7 +103,7 @@ char* get_intMuestreo()
 }
 
 
-void conectionStatus_init(void)
+void LED_conectionStatus_init(void)
 {
     gpioMode(LED_STATUS,OUTPUT);
     gpioWrite(LED_STATUS,LOW);
@@ -122,8 +123,10 @@ void LED_status(int value){
         }
 }
 
-
-// LOCAL
+/*******************************************************************************
+ LOCAL FUNCTION DEFINITIONS
+ *******************************************************************************
+ ******************************************************************************/
 
 static char* get_numeros(char *var, char *sf) {
     // Verificar que los punteros no sean nulos
