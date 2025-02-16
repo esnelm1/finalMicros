@@ -1,6 +1,7 @@
 #include "msp430.h"
 #include "I2Croutines.h"
 
+
 #define MAXPAGEWRITE 64
 
 int PtrTransmit;
@@ -17,7 +18,7 @@ void InitI2C(unsigned char eeprom_i2c_address)
   P1SEL2 |= SDA_PIN + SCL_PIN;  // Esta línea es necesaria para seleccionar la función I2C
 
   // Inicialización del módulo I2C:
-  UCB0CTL1 |= UCSWRST;                      // Activa reset por software
+  UCB0CTL1 |= UCSWRST;                        // Activa reset por software
   UCB0CTL0 = UCMST + UCMODE_3 + UCSYNC;       // Modo Maestro I2C, síncrono
   UCB0CTL1 = UCSSEL_2 + UCTR + UCSWRST;       // Usa SMCLK, modo transmisión, mantiene reset
   UCB0BR0 = SCL_CLOCK_DIV;                    // fSCL = SMCLK/12 100kHz
@@ -69,9 +70,20 @@ void EEPROM_ByteWrite(unsigned int Address, unsigned char Data)
 
   I2CWriteInit();
   UCB0CTL1 |= UCTXSTT;
+
   __bis_SR_register(LPM0_bits + GIE);
   UCB0CTL1 |= UCTXSTP;
-  while(UCB0CTL1 & UCTXSTP);
+
+  unsigned int timeout = 10000;  // Límite de tiempo para la espera del STOP
+  while ((UCB0CTL1 & UCTXSTP) && --timeout);
+
+  if (timeout == 0) {
+      //ERROR: El STOP nunca se completó, reiniciar el módulo I2C
+      UCB0CTL1 |= UCSWRST;  // Reset del módulo I2C
+      UCB0CTL1 &= ~UCSWRST; // Salir del reset
+  }
+
+//  while(UCB0CTL1 & UCTXSTP);
 }
 
 void EEPROM_PageWrite(unsigned int StartAddress, unsigned char * Data, unsigned int Size)
@@ -223,7 +235,16 @@ void EEPROM_AckPolling(void)
         break;
     }
     UCB0CTL1 |= UCTXSTP;
-    while (UCB0CTL1 & UCTXSTP);
+    //while (UCB0CTL1 & UCTXSTP);
+    unsigned int timeout = 10000;
+    while ((UCB0CTL1 & UCTXSTP) && --timeout);
+
+    if (timeout == 0) {
+        // ERROR: El STOP no se completó. Reiniciamos el módulo I2C.
+        UCB0CTL1 |= UCSWRST;  // Poner en reset
+        UCB0CTL1 &= ~UCSWRST; // Salir del reset
+    }
+
     __delay_cycles(500);
   } while(UCNACKIFG & UCB0STAT);
 }
@@ -234,7 +255,12 @@ __interrupt void TX_ISR_I2C(void)
   if(UCB0TXIFG & IFG2)
   {
     UCB0TXBUF = I2CBufferArray[PtrTransmit]; // Cargar el buffer de transmisión
+
+    while (UCB0STAT & UCNACKIFG);
+
+
     PtrTransmit--;
+    IFG2 |= UCB0TXIFG;
     if(PtrTransmit < 0)
     {
       while(!(IFG2 & UCB0TXIFG));

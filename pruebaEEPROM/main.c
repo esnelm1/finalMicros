@@ -27,9 +27,11 @@ int main(void)
 
   InitI2C(SlaveAddress);                    // Inicializar el módulo I2C
 
+/*
   EEPROM_ByteWrite(0x0000,0x12);
   EEPROM_AckPolling();                      // Espera final del ciclo de escritura
-  EEPROM_ByteWrite(0x0001,0x34);
+*/
+/*  EEPROM_ByteWrite(0x0001,0x34);
   EEPROM_AckPolling();
   EEPROM_ByteWrite(0x0002,0x56);
   EEPROM_AckPolling();
@@ -38,14 +40,16 @@ int main(void)
   EEPROM_ByteWrite(0x0004,0x9A);
   EEPROM_AckPolling();
   EEPROM_ByteWrite(0x0005,0xBC);
-  EEPROM_AckPolling();
+  EEPROM_AckPolling();*/
 
   read_val[0] = EEPROM_RandomRead(0x0000);
+/*
   read_val[1] = EEPROM_CurrentAddressRead();
   read_val[2] = EEPROM_CurrentAddressRead();
   read_val[3] = EEPROM_CurrentAddressRead();
   read_val[4] = EEPROM_CurrentAddressRead();
   read_val[5] = EEPROM_CurrentAddressRead();
+*/
 
   // Llenar el arreglo write_val con valores crecientes
   for(i = 0 ; i < sizeof(write_val); i++)

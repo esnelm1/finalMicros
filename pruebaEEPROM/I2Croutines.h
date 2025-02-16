@@ -11,8 +11,8 @@
 #define I2C_PORT_OUT  P1OUT
 #define I2C_PORT_REN  P1REN
 #define I2C_PORT_DIR  P1DIR
-#define SDA_PIN       BIT7   // SDA en P1.7
-#define SCL_PIN       BIT6   // SCL en P1.6
+#define SDA_PIN       (1<<7)   // SDA en P1.7
+#define SCL_PIN       (1<<6)   // SCL en P1.6
 #define SCL_CLOCK_DIV 0x12   // Divisor del reloj SCL (ajustable según se requiera)
 
 // Prototipos de funciones

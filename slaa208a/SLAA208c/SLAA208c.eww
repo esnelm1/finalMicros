@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<workspace>
+  <project>
+    <path>$WS_DIR$\1xx_USART\C\SLAA208_1xx.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\2xx_USCI\C\SLAA208_2xx.ewp</path>
+  </project>
+  <batchBuild/>
+</workspace>
+
+
