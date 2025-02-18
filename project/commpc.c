@@ -12,6 +12,7 @@ con una interfaz de matlab. Hay que ver como hacer que sea robusta y no pierda d
  * INCLUDE HEADER FILES
  ******************************************************************************/
 #include "commpc.h"
+#include "cqueue.h"
 #include "UART.h"
 #include "calefactor.h"
 #include "board.h"
@@ -36,13 +37,12 @@ con una interfaz de matlab. Hay que ver como hacer que sea robusta y no pierda d
 /*******************************************************************************
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
-static char* get_numeros(char *var, char *sf);
-void uart_read_line(char *buffer, size_t size);
+//static char* get_numeros(char *var, char *sf);
+
 
 /*******************************************************************************
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
-
 
 /*******************************************************************************
  *******************************************************************************
@@ -64,8 +64,7 @@ void uart_read_line(char *buffer, size_t size);
 
 char check_comm(void)
 {
-    unsigned char message = uart_get_char();
-    return (message == 0x01);  //Recibe dato en ascii
+    return (uart_get_char() == 1); // Establece comunicacion con Matlab
 }
 
 void print_temperature()
@@ -84,29 +83,17 @@ void print_heater_state()
     uart_put_char(FINISH_MESSAGE); //con CR
 }
 
-char* get_setpoint()
-{
-    char *sp = get_numeros(uart_get_char(),"SP");
-    return sp;
-}
+void get_setpoint(unsigned char* sp) {*sp = uart_get_char();}
 
-char* get_histeresis()
-{
-    char *h = get_numeros(uart_get_char(),"H");
-    return h;
-}
+void get_histeresis(unsigned char* h) {*h = uart_get_char();}
 
-char* get_intMuestreo()
+void get_intMuestra(unsigned int* im)
 {
-    char *im = get_numeros(uart_get_char(),"IM");
-    return im;
-}
+    unsigned char lowByte = uart_get_char();   // Lee el byte bajo
+    unsigned char highByte = uart_get_char();  // Lee el byte alto
 
-
-void LED_conectionStatus_init(void)
-{
-    gpioMode(LED_STATUS,OUTPUT);
-    gpioWrite(LED_STATUS,LOW);
+    // Combina los dos bytes
+    *im = ((unsigned int)highByte << 8) | lowByte;
 }
 
 
@@ -123,37 +110,32 @@ void LED_status(int value){
         }
 }
 
+int recibe_parametros(unsigned char *setPoint, unsigned char *histeresis, unsigned int *intervaloMuestreo)
+{
+    // Se esperan al menos 4 bytes en el buffer
+    if (getRXStatus() > 3)
+    {
+        get_setpoint(setPoint);
+        get_histeresis(histeresis);
+        get_intMuestra(intervaloMuestreo);
+        return 1;
+    }
+    return 0;
+}
+
+void uart_put_string(const char *str)
+{
+    while (*str) {
+        uart_put_char(*str++);
+    }
+}
+
 /*******************************************************************************
  LOCAL FUNCTION DEFINITIONS
  *******************************************************************************
  ******************************************************************************/
 
-static char* get_numeros(char *var, char *sf) {
-    // Verificar que los punteros no sean nulos
-    if (var == NULL || sf == NULL) {
-        return NULL;
-    }
 
-    // Buscar el sufijo en la cadena
-    char *pos = strstr(var, sf);
-    if (pos != NULL) {
-        // Extraer los números antes del sufijo
-        size_t len = pos - var; // Longitud de los números
-
-        // Reservar memoria dinámica
-        char *numeros = (char*)malloc((len + 1) * sizeof(char));
-        if (numeros == NULL) {
-            return NULL; // Si falla la asignación de memoria
-        }
-
-        strncpy(numeros, var, len);
-        numeros[len] = '\0'; // Agregar terminador nulo
-        return numeros; // Retornar puntero a memoria dinámica
-    } else {
-        printf("No coinciden con el sufijo %s\n", sf);
-        return NULL; // Devolver NULL si no hay coincidencia
-    }
-}
 
 /******************************************************************************/
 

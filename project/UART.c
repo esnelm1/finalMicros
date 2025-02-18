@@ -47,17 +47,17 @@ enum
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
 
-static int getTXStatus(void);
-static int getRXStatus(void);
-static void uart_finish(void);
 
 /*******************************************************************************
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
 
-//unsigned char uart_message;
-//char hexString[3]
 unsigned long uart_message;
+unsigned char rxdata;
+
+volatile unsigned char txBuffer[QSIZE];
+volatile unsigned int txHead = 0;
+volatile unsigned int txTail = 0;
 
 /*******************************************************************************
  *******************************************************************************
@@ -72,8 +72,6 @@ void uart_init(void)
     // port init
     P1SEL  |= PIN_UART_RX | PIN_UART_TX;
     P1SEL2 |= PIN_UART_RX | PIN_UART_TX;
-
-
     P1DIR |= 1<<2;
     P1REN |= 1<<1; /* Place UCA0 in Reset to be configured */
     P1OUT |= (1<<1) + (1<<2);
@@ -91,59 +89,77 @@ void uart_init(void)
 
 }
 
+#include "UART.h"
+#include "cqueue.h"
+// ... otras inclusiones
+
+// Eliminamos las variables locales de TX que antes estaban definidas, ya que usaremos las de cqueue:
+// volatile unsigned char txBuffer[QSIZE];
+// volatile unsigned int txHead = 0;
+// volatile unsigned int txTail = 0;
+
 void uart_put_char(char message)
 {
-    while (getTXStatus() != TX_EMPTY) // USCI_A0 TX buffer ready?
-        TX_BUFFER = message;
-        uart_finish();
+    __disable_interrupt(); // Protege la sección crítica
+
+    // Intenta insertar el byte en la cola de transmisión.
+    // Si la cola está llena, espera (busy-wait). Podrías implementar un timeout si es necesario.
+    while(PushQueue_TX(message) == QFULL)
+    {
+        ; // Espera hasta que haya espacio en el buffer TX
+    }
+
+    // Habilita la interrupción de TX para que se inicie la transmisión de datos.
+    IE2 |= UCA0TXIE;
+
+    __enable_interrupt();
 }
+
 
 char uart_get_char(void)
 {
-    unsigned char rxdata;
     //while (getRXStatus()) {
-        PullQueue(&rxdata);          //pulls data from buffer and assigns it to rxdata pointer
+    PullQueue(&rxdata);          //pulls data from buffer and assigns it to rxdata pointer
     //}
     return rxdata;
 }
 
+int getRXStatus(void)
+{
+    return (QueueStatus());          //returns buffer status
 
+}
 
 /*******************************************************************************
  LOCAL FUNCTION DEFINITIONS
  *******************************************************************************
  ******************************************************************************/
 
-static void uart_finish(void)
-{
-    while (getTXStatus() != TX_EMPTY) // USCI_A0 TX buffer ready?
-        TX_BUFFER = FINISH_MESSAGE;
-}
-
-
-static int getTXStatus(void)
-{
-    return (IFG2 & TX_EMPTY);         //checks that TX buffer is empty and UART flag is set
-
-}
-
-
-static int getRXStatus(void)
-{
-    return (QueueStatus());          //returns buffer status
-
-}
-
-
+// INTERRUPT RX
 #pragma vector = USCIAB0RX_VECTOR
 __interrupt void uart_rx_isr(void)
 {
-    if (IFG2 &RX_FULL)
+    if (IFG2 & RX_FULL)
     {
         PushQueue (RX_BUFFER);       //checks dedicated flag
         IFG2 &= ~RX_FULL;            //sets local flag
     }
 }
 
-/******************************************************************************/
+// Ver de poner interrupt para mandar
+#pragma vector = USCIAB0TX_VECTOR
+__interrupt void USCI0TX_ISR(void)
+{
+    unsigned char byte;
+    // Extrae el siguiente byte de la cola TX y envíalo
+    if(PullQueue_TX(&byte) == QOK)
+    {
+         TX_BUFFER = byte;
+    }
+    else
+    {
+         // No quedan datos, deshabilita la interrupción de TX
+         IE2 &= ~UCA0TXIE;
+    }
+}
 

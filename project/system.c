@@ -81,6 +81,7 @@ void systemInitFirst(void)
 void boardInit(void)
 {
     uart_init();
+    LED_conectionStatus_init();
     //oneWire_init();
     //i2c_init();
     //spi_init();
@@ -101,6 +102,12 @@ void systemInitLast(void)
     //WDTCTL = WDT_MDLY_0_5; // Watchdog timer interval mode; intervalo seleccionado, 0.5ms entre interrupciones del watchdog
     //IE1 |= WDTIE; // Habilitar el bit WDTIE, habilitar interrupciones del watchdog
     enable_interrupts(); // Habilitar interrupciones generales
+}
+
+void LED_conectionStatus_init(void)
+{
+    gpioMode(LED_STATUS,OUTPUT);
+    gpioWrite(LED_STATUS,LOW);
 }
 
 

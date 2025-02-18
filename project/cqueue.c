@@ -8,9 +8,9 @@
 /*******************************************************************************
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
-static unsigned char buffer[QSIZE];   // storage for circular queue (static)
-static unsigned int news;	    	  // How many "news" are remaining in Queue
-static unsigned char *pin, *pout;     // input and output pointers 	
+static unsigned char buffer[QSIZE], buffer_2[QSIZE];   // storage for circular queue (static)
+static unsigned int news,news_2;	    	  // How many "news" are remaining in Queue
+static unsigned char *pin, *pout,*pin_2, *pout_2;     // input and output pointers
 
 /*******************************************************************************
  *******************************************************************************
@@ -23,6 +23,9 @@ void QueueInit(void) {
     pin  = buffer;	//set up pin, pout and "news" counter 	
     pout = buffer;
     news = 0;
+    pin_2  = buffer_2;
+    pout_2 = buffer_2;
+    news_2 = 0;
 }
 
 //push data on queue
@@ -76,9 +79,40 @@ unsigned char PullQueue(unsigned char *pdata) {
     return (QOK);				// return operation status 
 }
 
+
+
 // queue status
 unsigned int QueueStatus(void) {
     return (news);			// Retrieve "news" counter, Queue is empty when null is returned		
 }
 
-/******************************************************************************/
+
+// AGREGADO -----------------------------------------------------------------------
+
+/* AGREGADO: Funciones para transmisión (TX) */
+
+unsigned char PushQueue_TX(unsigned char data) {
+    if (news_2 > QSIZE - 1) {       // Verifica overflow del buffer TX
+        return QFULL;             // Se alcanzó la capacidad máxima
+    }
+    *pin_2++ = data;              // Almacena el dato en el buffer TX
+    news_2++;                     // Incrementa el contador del buffer TX (corregido)
+    if (pin_2 == buffer_2 + QSIZE) // Si se excede el final del buffer, se reinicia el puntero
+        pin_2 = buffer_2;
+    return QOK;                   // Operación exitosa
+}
+
+unsigned char PullQueue_TX(unsigned char *pdata) {
+    if (news_2 == 0)              // Si no hay datos en el buffer TX
+        return QEMPTY;            // Retorna que el buffer está vacío
+
+    *pdata = *pout_2++;           // Extrae el dato y lo asigna al puntero
+    news_2--;                     // Decrementa el contador de datos en el buffer TX
+    if (pout_2 == buffer_2 + QSIZE) // Si se excede el final del buffer, se reinicia el puntero
+        pout_2 = buffer_2;
+    return QOK;                   // Operación exitosa
+}
+
+unsigned int QueueStatus_TX(void) {
+    return news_2;                // Retorna la cantidad de bytes almacenados en el buffer TX
+}

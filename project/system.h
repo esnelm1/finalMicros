@@ -49,6 +49,7 @@ void timer_set_init(void);
  */
 void systemInitLast(void);
 
+void LED_conectionStatus_init(void);
 
 
 /*******************************************************************************

@@ -36,7 +36,7 @@ void uart_init(void);
 void uart_set_message(unsigned long);
 void uart_put_char(char message);
 char uart_get_char(void);
-
+int getRXStatus(void);
 
 /*******************************************************************************
  ******************************************************************************/

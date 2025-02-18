@@ -17,7 +17,6 @@
  ******************************************************************************/
 
 
-
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
@@ -32,11 +31,13 @@
 char check_comm();
 void print_temperature();
 void print_heater_state();
-char* get_setpoint();
-char* get_histeresis();
-char* get_intMuestreo();
-void LED_conectionStatus_init(void);
+void get_setpoint(unsigned char* setpoint);
+void get_histeresis(unsigned char* histeresis);
+void get_intMuestra(unsigned int* int_muestra);
+int recibe_parametros(unsigned char *setPoint, unsigned char *histeresis, unsigned int *intervaloMuestreo);
 void LED_status(int value);
+void uart_put_string(const char *str);
+
 
 
 /*******************************************************************************
