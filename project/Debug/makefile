@@ -13,7 +13,6 @@ ORDERED_OBJS += \
 "./UART.obj" \
 "./barraLed.obj" \
 "./calefactor.obj" \
-"./commpc.obj" \
 "./cqueue.obj" \
 "./eprom.obj" \
 "./gpio.obj" \
@@ -157,8 +156,8 @@ final-micros.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 # Other Targets
 clean:
 	-$(RM) $(EXE_OUTPUTS__QUOTED)
-	-$(RM) "UART.obj" "barraLed.obj" "calefactor.obj" "commpc.obj" "cqueue.obj" "eprom.obj" "gpio.obj" "i2c.obj" "main.obj" "onewire.obj" "pwm.obj" "rti.obj" "spi.obj" "statusLed.obj" "system.obj" "temperatura.obj" "timer.obj" 
-	-$(RM) "UART.d" "barraLed.d" "calefactor.d" "commpc.d" "cqueue.d" "eprom.d" "gpio.d" "i2c.d" "main.d" "onewire.d" "pwm.d" "rti.d" "spi.d" "statusLed.d" "system.d" "temperatura.d" "timer.d" 
+	-$(RM) "UART.obj" "barraLed.obj" "calefactor.obj" "cqueue.obj" "eprom.obj" "gpio.obj" "i2c.obj" "main.obj" "onewire.obj" "pwm.obj" "rti.obj" "spi.obj" "statusLed.obj" "system.obj" "temperatura.obj" "timer.obj" 
+	-$(RM) "UART.d" "barraLed.d" "calefactor.d" "cqueue.d" "eprom.d" "gpio.d" "i2c.d" "main.d" "onewire.d" "pwm.d" "rti.d" "spi.d" "statusLed.d" "system.d" "temperatura.d" "timer.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

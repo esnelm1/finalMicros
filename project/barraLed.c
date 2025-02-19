@@ -17,7 +17,7 @@ que tan cerca estamos del fondo de escala. Esto se hace con el shift register*/
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
-
+#define MAX_TEMP 80 //esto puede no ser una macro
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
@@ -40,7 +40,20 @@ que tan cerca estamos del fondo de escala. Esto se hace con el shift register*/
  GLOBAL FUNCTION DEFINITIONS
  *******************************************************************************
  ******************************************************************************/
+void barraled_write_temp(uint16_t data){
+    uint16_t temp = data/10;
 
+    int bits_en_1 = (temp * 8) / MAX_TEMP; // Proporcional a la temperatura (0-8 bits)
+    if (bits_en_1>8) {
+        bits_en_1 = 8;
+    }
+    // Generar el valor de nivel con los bits más significativos en 1
+    unsigned char nivel = (1 << bits_en_1) - 1;
+
+    //spi_write(nivel);
+    get_nivel(nivel);
+
+}
 
 /*******************************************************************************
  LOCAL FUNCTION DEFINITIONS

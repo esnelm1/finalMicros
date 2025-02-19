@@ -12,7 +12,6 @@ C_SRCS += \
 ../UART.c \
 ../barraLed.c \
 ../calefactor.c \
-../commpc.c \
 ../cqueue.c \
 ../eprom.c \
 ../gpio.c \
@@ -31,7 +30,6 @@ C_DEPS += \
 ./UART.d \
 ./barraLed.d \
 ./calefactor.d \
-./commpc.d \
 ./cqueue.d \
 ./eprom.d \
 ./gpio.d \
@@ -50,7 +48,6 @@ OBJS += \
 ./UART.obj \
 ./barraLed.obj \
 ./calefactor.obj \
-./commpc.obj \
 ./cqueue.obj \
 ./eprom.obj \
 ./gpio.obj \
@@ -69,7 +66,6 @@ OBJS__QUOTED += \
 "UART.obj" \
 "barraLed.obj" \
 "calefactor.obj" \
-"commpc.obj" \
 "cqueue.obj" \
 "eprom.obj" \
 "gpio.obj" \
@@ -88,7 +84,6 @@ C_DEPS__QUOTED += \
 "UART.d" \
 "barraLed.d" \
 "calefactor.d" \
-"commpc.d" \
 "cqueue.d" \
 "eprom.d" \
 "gpio.d" \
@@ -107,7 +102,6 @@ C_SRCS__QUOTED += \
 "../UART.c" \
 "../barraLed.c" \
 "../calefactor.c" \
-"../commpc.c" \
 "../cqueue.c" \
 "../eprom.c" \
 "../gpio.c" \

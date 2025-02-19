@@ -30,7 +30,7 @@
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
 
-void calefactor_setPotencia(uint8_t);
+void calefactor_setPotencia(uint16_t);
 void calefactor_turnOn(void);
 void calefactor_turnOff(void);
 char calefactor_status(void);

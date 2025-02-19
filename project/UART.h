@@ -7,7 +7,8 @@
 #ifndef _UART_H_
 #define _UART_H_
 
-#include <string.h>
+
+#include "common.h"
 #include "cqueue.h"
 
 /*******************************************************************************
@@ -52,8 +53,7 @@ void get_histeresis(unsigned char* histeresis);
 void get_intMuestra(unsigned int* int_muestra);
 int recibe_parametros(unsigned char *setPoint, unsigned char *histeresis, unsigned int *intervaloMuestreo);
 void LED_status_cases(int value);
-
-
+void print_status(uint16_t temp, char heater);
 /*******************************************************************************
  ******************************************************************************/
 

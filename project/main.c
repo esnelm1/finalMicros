@@ -11,8 +11,12 @@
 #include "system.h"
 #include "board.h"
 #include "eprom.h"
-#include "commpc.h"
+#include "statusLed.h"
+#include "barraLed.h"
+#include "calefactor.h"
+#include "temperatura.h"
 #include "UART.h"
+
 
 //*******************************************************************************
 // * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -41,7 +45,6 @@ uint16_t temp_setpoint; //codificado igual que temp
 void AppInit(void);
 void AppRun(void);
 void checkTemp(void);
-void print_status(void);
 /*******************************************************************************
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
@@ -85,8 +88,7 @@ void AppInit(void){ //PRIMERA COMUNICACION CON EL UART
 }
 void AppRun (void){
 
-    // Para volver a conectar a Matlab
-    //check_comunicacion();
+    //check_comunicacion()  //Para volver a conectar a Matlab
     recibe_parametros(&setPoint, &histeresis, &intervaloMuestreo);
     checkTemp();
 }
@@ -94,10 +96,10 @@ void AppRun (void){
 
 void checkTemp(void){
     // Lectura de temperatura (se debe reemplazar readTemperatura() por la función real)
-    // temp = readTemperatura();
-    temp = 445;  // Ejemplo: 445 se muestra como "0445" en el formato de 4 dígitos
+    temp = readTemperatura();
+    //temp = 445;  // Ejemplo: 445 se muestra como "0445" en el formato de 4 dígitos
     temp_setpoint = 1000;
-
+    barraled_write_temp(temp);
     if (temp > temp_setpoint)
     {
         calefactor_turnOff();
@@ -110,62 +112,7 @@ void checkTemp(void){
         }
     }
     // Se envía la información por TX: temperatura (4 dígitos) y estado del calefactor (1 dígito)
-    print_status();
+    print_status(temp,calefactor_status());
 }
 
-void print_status(void)
-{
-    int heater = calefactor_status();
-    char msg[6];  // 4 dígitos para la temperatura, 1 dígito para el estado y 1 carácter CR
 
-    // Conversión manual a 4 dígitos (se añaden ceros a la izquierda si es necesario)
-    msg[0] = '0' + ((temp / 1000) % 10);
-    msg[1] = '0' + ((temp / 100) % 10);
-    msg[2] = '0' + ((temp / 10) % 10);
-    msg[3] = '0' + (temp % 10);
-
-    // Estado del calefactor (asumido que es 0 o 1)
-    msg[4] = '0' + (heater & 0xF);
-
-    // Caracter de finalización
-    msg[5] = FINISH_MESSAGE;
-
-    uart_send_message(msg, 6);
-}
-
-/*******************************************************************************
- *******************************************************************************
-                        LOCAL FUNCTION DEFINITIONS
- *******************************************************************************
- ******************************************************************************/
-
-
-/******************************************************************************/
-
-//#include "system.h"
-//#include "board.h"
-//#include "eprom.h"
-//#include "commpc.h"
-//#include "UART.h"
-//
-//unsigned char setPoint, histeresis;
-//unsigned int intervaloMuestreo;
-//
-//void main (void){
-//
-//    systemInitFirst();
-//    boardInit();
-//    timer_set_init();
-//    LED_conectionStatus_init();
-//    systemInitLast();
-//
-//    while (1) //primer comunicarse con la compu por uart
-//    {
-//        if (check_comunicacion()) //chequea conexion con la PC por UARt
-//        {
-//            LED_status(LED_NORMAL);
-//            conexion = CONECTADO;
-//            recibe_parametros(&setPoint, &histeresis, &intervaloMuestreo)
-//        }
-//    }
-//}

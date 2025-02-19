@@ -4,13 +4,10 @@
 *******************************************************************************/
 
 #include "UART.h"
-#include "cqueue.h"
-#include "common.h"
 #include "board.h"
 #include "timer.h"
 #include "hardware.h"
 #include "gpio.h"
-#include <string.h>
 
 #define RX_FULL   UCA0RXIFG
 #define TX_EMPTY  UCA0TXIFG
@@ -145,6 +142,25 @@ int recibe_parametros(unsigned char *sp, unsigned char *h, unsigned int *im)
         return 1;
     }
     return 0;
+}
+
+void print_status(uint16_t temp, char heater)
+{
+    char msg[6];  // 4 dígitos para la temperatura, 1 dígito para el estado y 1 carácter CR
+
+    // Conversión manual a 4 dígitos (se añaden ceros a la izquierda si es necesario)
+    msg[0] = '0' + ((temp / 1000) % 10);
+    msg[1] = '0' + ((temp / 100) % 10);
+    msg[2] = '0' + ((temp / 10) % 10);
+    msg[3] = '0' + (temp % 10);
+
+    // Estado del calefactor (asumido que es 0 o 1)
+    msg[4] = '0' + (heater & 0xF);
+
+    // Caracter de finalización
+    msg[5] = FINISH_MESSAGE;
+
+    uart_send_message(msg, 6);
 }
 
 //INTERRUPT TX

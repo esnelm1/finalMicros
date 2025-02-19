@@ -82,9 +82,10 @@ void boardInit(void)
 {
     uart_init();
     LED_conectionStatus_init();
+    spi_init();
     //oneWire_init();
     //i2c_init();
-    //spi_init();
+
     //pwm_init();
  
 }

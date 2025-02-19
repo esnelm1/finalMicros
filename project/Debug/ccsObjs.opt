@@ -1,7 +1,6 @@
 "./UART.obj"
 "./barraLed.obj"
 "./calefactor.obj"
-"./commpc.obj"
 "./cqueue.obj"
 "./eprom.obj"
 "./gpio.obj"
