@@ -83,10 +83,9 @@ void boardInit(void)
     uart_init();
     LED_conectionStatus_init();
     spi_init();
-    //oneWire_init();
-    //i2c_init();
-
-    //pwm_init();
+    oneWire_init();
+    I2cInit();
+    pwm_init();
  
 }
 
@@ -120,7 +119,7 @@ void LED_conectionStatus_init(void)
  ******************************************************************************/
 
 static void step_on(void){
-    gpioWrite(PIN_LED_GREEN, LED_ACTIVE);
+    //gpioWrite(PIN_LED_GREEN, LED_ACTIVE);
 }
 
 /******************************************************************************/

@@ -19,12 +19,10 @@
  ******************************************************************************/
 
 // On Board User LEDs
-
 #define LED_ACTIVE          HIGH
 
 
 // On Board User Switches
-
 #define SWITCH_INPUT        INPUT_PULLUP
 #define SWITCH_ACTIVE       LOW
 
@@ -45,7 +43,7 @@
 #define LED_STATUS PORTNUM2PIN(2,3) //2.3
 
 // Pin Green LED Timer
-#define PIN_LED_GREEN PORTNUM2PIN(2,2)  // Lo DEFINI RECIEN
+//#define PIN_LED_GREEN PORTNUM2PIN(2,2)  // Lo DEFINI RECIEN
 
 // PWM PIN
 #define PIN_PWM   (1<<4) //2.4

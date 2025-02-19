@@ -1,31 +1,52 @@
 /***************************************************************************//**
- @file     UART.c
- @brief    Funciones UART (modificadas para envío no bloqueante)
-*******************************************************************************/
+  @file     UART.h
+  @brief    UART global functions
+  @author   Conradeus
+ ******************************************************************************/
 
+/*******************************************************************************
+ * INCLUDE HEADER FILES
+ ******************************************************************************/
 #include "UART.h"
 #include "board.h"
 #include "timer.h"
 #include "hardware.h"
-#include "gpio.h"
-
+/*******************************************************************************
+ * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
+ ******************************************************************************/
 #define RX_FULL   UCA0RXIFG
 #define TX_EMPTY  UCA0TXIFG
 #define RX_BUFFER UCA0RXBUF
 #define TX_BUFFER UCA0TXBUF
-
 #define UART_DELAY_MS 10
 #define MAX_SCALE 255
 #define MAX_VOLTAJE 3300
 #define END_BYTE 0x46 //una F
+/*******************************************************************************
+ * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
+ ******************************************************************************/
+TX_Buffer Tx_buffer = {.txBufferLength = 0, .txBufferIndex = 0, .transmitting = 0};  // Buffer de transmisiï¿½n inicializado
+/*******************************************************************************
+ * VARIABLES WITH GLOBAL SCOPE
+ ******************************************************************************/
 
+/*******************************************************************************
+ * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
+ ******************************************************************************/
 static unsigned char rxdata;
+static void get_setpoint(unsigned char* sp);
+static void get_histeresis(unsigned char* h);
+static void get_intMuestra(unsigned int* im);
+static int getRXStatus(void);
+static int getTXStatus(void);
+
 
 static char rx_datosFlag = 0;
-TX_Buffer Tx_buffer = {.txBufferLength = 0, .txBufferIndex = 0, .transmitting = 0};  // Buffer de transmisiï¿½n inicializado
-
-
-
+/*******************************************************************************
+ *******************************************************************************
+ GLOBAL FUNCTION DEFINITIONS
+ *******************************************************************************
+ ******************************************************************************/
 void uart_init(void)
 {
     QueueInit();  // Inicializa el buffer circular para RX
@@ -48,9 +69,7 @@ void uart_init(void)
     IE2 |= UCA0RXIE;          // Habilita la interrupción de recepción
 }
 
-
-// Función para enviar un mensaje completo
-void uart_send_message(const char* msg, unsigned char len)
+void uart_send_message(const char* msg, unsigned char len) // Función para enviar un mensaje completo
 {
     // Si ya se está transmitiendo otro mensaje, se descarta este
     if(Tx_buffer.transmitting) return;
@@ -81,41 +100,10 @@ unsigned char uart_get_char(void)
     return 0;
 }
 
-int getRXStatus(void)
-{
-    return QueueStatus();
-}
-
-int getTXStatus(void)
-{
-    return (IFG2 & TX_EMPTY);
-}
-
-
 char check_comunicacion(void)
 {
     return rx_datosFlag;  // Establece comunicacion con Matlab
 }
-
-void get_setpoint(unsigned char* sp)
-{
-    *sp = uart_get_char();
-}
-
-void get_histeresis(unsigned char* h)
-{
-    *h = uart_get_char();
-}
-
-void get_intMuestra(unsigned int* im)
-{
-    unsigned char lowByte = uart_get_char();   // Lee el byte bajo
-    unsigned char highByte = uart_get_char();  // Lee el byte alto
-
-    // Combina los dos bytes
-    *im = ((unsigned int)highByte << 8) | lowByte;
-}
-
 
 void LED_status_cases(int value){
     switch (value)
@@ -161,6 +149,39 @@ void print_status(uint16_t temp, char heater)
     msg[5] = FINISH_MESSAGE;
 
     uart_send_message(msg, 6);
+}
+
+/*******************************************************************************
+ LOCAL FUNCTION DEFINITIONS
+ *******************************************************************************
+ ******************************************************************************/
+static void get_setpoint(unsigned char* sp)
+{
+    *sp = uart_get_char();
+}
+
+static void get_histeresis(unsigned char* h)
+{
+    *h = uart_get_char();
+}
+
+static void get_intMuestra(unsigned int* im)
+{
+    unsigned char lowByte = uart_get_char();   // Lee el byte bajo
+    unsigned char highByte = uart_get_char();  // Lee el byte alto
+
+    // Combina los dos bytes
+    *im = ((unsigned int)highByte << 8) | lowByte;
+}
+
+static int getRXStatus(void)
+{
+    return QueueStatus();
+}
+
+static int getTXStatus(void)
+{
+    return (IFG2 & TX_EMPTY);
 }
 
 //INTERRUPT TX

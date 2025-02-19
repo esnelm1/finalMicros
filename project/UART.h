@@ -3,18 +3,14 @@
   @brief    UART global functions
   @author   Conradeus
  ******************************************************************************/
-
 #ifndef _UART_H_
 #define _UART_H_
-
-
-#include "common.h"
-#include "cqueue.h"
 
 /*******************************************************************************
  * INCLUDE HEADER FILES
  ******************************************************************************/
-
+#include "common.h"
+#include "cqueue.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE 
@@ -44,13 +40,8 @@ void uart_init(void);
 void uart_set_message(unsigned long);
 void uart_put_char(char message);
 unsigned char uart_get_char(void);
-int getRXStatus(void);
-int getTXStatus(void);
 void uart_send_message(const char* msg, unsigned char len);
 char check_comunicacion();
-void get_setpoint(unsigned char* setpoint);
-void get_histeresis(unsigned char* histeresis);
-void get_intMuestra(unsigned int* int_muestra);
 int recibe_parametros(unsigned char *setPoint, unsigned char *histeresis, unsigned int *intervaloMuestreo);
 void LED_status_cases(int value);
 void print_status(uint16_t temp, char heater);
