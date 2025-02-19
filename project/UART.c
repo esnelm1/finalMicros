@@ -1,12 +1,7 @@
 /***************************************************************************//**
- @file     display.c
- @brief    display control
- @author   Conradeus
- ******************************************************************************/
-
-/*******************************************************************************
- * INCLUDE HEADER FILES
- ******************************************************************************/
+ @file     UART.c
+ @brief    Funciones UART (modificadas para envío no bloqueante)
+*******************************************************************************/
 
 #include "UART.h"
 #include "cqueue.h"
@@ -15,151 +10,173 @@
 #include "timer.h"
 #include "hardware.h"
 #include "gpio.h"
+#include <string.h>
 
-/*******************************************************************************
- * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
- ******************************************************************************/
-#define RX_FULL   UCA0RXIFG  //UCA0RXIFG is set when UCA0RXBUF has received a complete character
-#define TX_EMPTY  UCA0TXIFG  //UCA0TXIFG is set when UCA0TXBUF is empty
-#define RX_BUFFER UCA0RXBUF //receive buffer
-#define TX_BUFFER UCA0TXBUF //transmit buffer
+#define RX_FULL   UCA0RXIFG
+#define TX_EMPTY  UCA0TXIFG
+#define RX_BUFFER UCA0RXBUF
+#define TX_BUFFER UCA0TXBUF
 
 #define UART_DELAY_MS 10
 #define MAX_SCALE 255
 #define MAX_VOLTAJE 3300
+#define END_BYTE 0x46 //una F
+
+static unsigned char rxdata;
+
+static char rx_datosFlag = 0;
+TX_Buffer Tx_buffer = {.txBufferLength = 0, .txBufferIndex = 0, .transmitting = 0};  // Buffer de transmisiï¿½n inicializado
 
 
-//type of messages
-enum
-{
-    RAW_MESSAGE, VOLTAGE_MESSAGE
-};
 
-/*******************************************************************************
- * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
- ******************************************************************************/
-
-/*******************************************************************************
- * VARIABLES WITH GLOBAL SCOPE
- ******************************************************************************/
-
-/*******************************************************************************
- * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
- ******************************************************************************/
-
-
-/*******************************************************************************
- * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
- ******************************************************************************/
-
-unsigned long uart_message;
-unsigned char rxdata;
-
-volatile unsigned char txBuffer[QSIZE];
-volatile unsigned int txHead = 0;
-volatile unsigned int txTail = 0;
-
-/*******************************************************************************
- *******************************************************************************
- GLOBAL FUNCTION DEFINITIONS
- *******************************************************************************
- ******************************************************************************/
 void uart_init(void)
 {
-    
-    QueueInit();          //buffer init
-    
-    // port init
+    QueueInit();  // Inicializa el buffer circular para RX
+
+    // Configuración de pines
     P1SEL  |= PIN_UART_RX | PIN_UART_TX;
     P1SEL2 |= PIN_UART_RX | PIN_UART_TX;
-    P1DIR |= 1<<2;
-    P1REN |= 1<<1; /* Place UCA0 in Reset to be configured */
-    P1OUT |= (1<<1) + (1<<2);
+    P1DIR |= 1 << 2;
+    P1REN |= 1 << 1;
+    P1OUT |= (1 << 1) + (1 << 2);
 
-    // Configurar el módulo USCI_A0 para UART
+    // Configuración del módulo USCI_A0 para UART
     UCA0CTL0 = 0;
-    UCA0CTL1 |= UCSWRST;    // Poner el módulo en reset para configurarlo
-    UCA0CTL1 |= UCSSEL_2;   // Seleccionar SMCLK (asumido a 8MHz)
-    UCA0BR0 = 104;          // Divisor para 9600 baudios (8MHz/9600 = 51)
+    UCA0CTL1 |= UCSWRST;      // Módulo en reset para configuración
+    UCA0CTL1 |= UCSSEL_2;     // Selecciona SMCLK (asumido 8MHz)
+    UCA0BR0 = 104;            // Divisor para 9600 baudios
     UCA0BR1 = 0;
-    UCA0MCTL = UCBRS0;      // Modulación (valor típico; verifica según tu dispositivo)
-    UCA0CTL1 &= ~UCSWRST;   // Sacar el módulo de reset
-    // Habilita la interrupción de recepción
-    IE2 |= UCA0RXIE;
-
+    UCA0MCTL = UCBRS0;        // Configuración de modulación
+    UCA0CTL1 &= ~UCSWRST;     // Sale del reset
+    IE2 |= UCA0RXIE;          // Habilita la interrupción de recepción
 }
 
-#include "UART.h"
-#include "cqueue.h"
-// ... otras inclusiones
 
-// Eliminamos las variables locales de TX que antes estaban definidas, ya que usaremos las de cqueue:
-// volatile unsigned char txBuffer[QSIZE];
-// volatile unsigned int txHead = 0;
-// volatile unsigned int txTail = 0;
+// Función para enviar un mensaje completo
+void uart_send_message(const char* msg, unsigned char len)
+{
+    // Si ya se está transmitiendo otro mensaje, se descarta este
+    if(Tx_buffer.transmitting) return;
+    memcpy(Tx_buffer.txBuffer, msg, len); //Si no se está transmitiendo, copia el mensaje recibido
+    Tx_buffer.txBufferLength = len;
+    Tx_buffer.txBufferIndex = 0;
+    Tx_buffer.transmitting = 1;
+    IE2 |= UCA0TXIE;
+
+    if(getTXStatus() == TX_EMPTY)
+    {
+        TX_BUFFER = Tx_buffer.txBuffer[Tx_buffer.txBufferIndex++];
+    }
+}
 
 void uart_put_char(char message)
 {
-    __disable_interrupt(); // Protege la sección crítica
-
-    // Intenta insertar el byte en la cola de transmisión.
-    // Si la cola está llena, espera (busy-wait). Podrías implementar un timeout si es necesario.
-    while(PushQueue_TX(message) == QFULL)
-    {
-        ; // Espera hasta que haya espacio en el buffer TX
-    }
-
-    // Habilita la interrupción de TX para que se inicie la transmisión de datos.
-    IE2 |= UCA0TXIE;
-
-    __enable_interrupt();
+    while(getTXStatus() != TX_EMPTY);
+        TX_BUFFER = message;
 }
 
-
-char uart_get_char(void)
+unsigned char uart_get_char(void)
 {
-    //while (getRXStatus()) {
-    PullQueue(&rxdata);          //pulls data from buffer and assigns it to rxdata pointer
-    //}
-    return rxdata;
+    if (getRXStatus()){
+        PullQueue(&rxdata);
+        return rxdata;
+    }
+    return 0;
 }
 
 int getRXStatus(void)
 {
-    return (QueueStatus());          //returns buffer status
-
+    return QueueStatus();
 }
 
-/*******************************************************************************
- LOCAL FUNCTION DEFINITIONS
- *******************************************************************************
- ******************************************************************************/
+int getTXStatus(void)
+{
+    return (IFG2 & TX_EMPTY);
+}
 
-// INTERRUPT RX
+
+char check_comunicacion(void)
+{
+    return rx_datosFlag;  // Establece comunicacion con Matlab
+}
+
+void get_setpoint(unsigned char* sp)
+{
+    *sp = uart_get_char();
+}
+
+void get_histeresis(unsigned char* h)
+{
+    *h = uart_get_char();
+}
+
+void get_intMuestra(unsigned int* im)
+{
+    unsigned char lowByte = uart_get_char();   // Lee el byte bajo
+    unsigned char highByte = uart_get_char();  // Lee el byte alto
+
+    // Combina los dos bytes
+    *im = ((unsigned int)highByte << 8) | lowByte;
+}
+
+
+void LED_status_cases(int value){
+    switch (value)
+        {
+        case 0: //funcionamiento error
+            gpioWrite(LED_STATUS,LOW);
+            break;
+
+        case 1: //funcionamiento normal
+            gpioWrite(LED_STATUS,HIGH);
+            break;
+        }
+}
+
+int recibe_parametros(unsigned char *sp, unsigned char *h, unsigned int *im)
+{
+    // Se esperan4 bytes en el buffer
+    if (rx_datosFlag)
+    {
+        get_setpoint(sp);
+        get_histeresis(h);
+        get_intMuestra(im);
+        rx_datosFlag = 0;
+        return 1;
+    }
+    return 0;
+}
+
+//INTERRUPT TX
+#pragma vector = USCIAB0TX_VECTOR
+__interrupt void uart_tx_isr(void)
+{
+    if(Tx_buffer.transmitting)
+    {
+         if(Tx_buffer.txBufferIndex < Tx_buffer.txBufferLength)
+         {
+             TX_BUFFER = Tx_buffer.txBuffer[Tx_buffer.txBufferIndex++];
+         }
+         else
+         {
+             Tx_buffer.transmitting = 0;  // Mensaje completado
+             IE2 &= ~UCA0TXIE; // Disable USCI_A0 TX interrupt
+         }
+    }
+}
+
+//INTERRUPT RX
 #pragma vector = USCIAB0RX_VECTOR
 __interrupt void uart_rx_isr(void)
 {
     if (IFG2 & RX_FULL)
     {
-        PushQueue (RX_BUFFER);       //checks dedicated flag
-        IFG2 &= ~RX_FULL;            //sets local flag
+        if (RX_BUFFER == END_BYTE){
+            rx_datosFlag = 1;
+        } else {
+            PushQueue(RX_BUFFER);
+            rx_datosFlag = 0;
+        }
+        IFG2 &= ~RX_FULL; //  se limpia el flag de RX_FULL
     }
 }
-
-// Ver de poner interrupt para mandar
-#pragma vector = USCIAB0TX_VECTOR
-__interrupt void USCI0TX_ISR(void)
-{
-    unsigned char byte;
-    // Extrae el siguiente byte de la cola TX y envíalo
-    if(PullQueue_TX(&byte) == QOK)
-    {
-         TX_BUFFER = byte;
-    }
-    else
-    {
-         // No quedan datos, deshabilita la interrupción de TX
-         IE2 &= ~UCA0TXIE;
-    }
-}
-

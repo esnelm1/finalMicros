@@ -27,6 +27,7 @@ system.obj: ../pwm.h
 system.obj: ../UART.h
 system.obj: C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/string.h
 system.obj: C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/xlocale/_string.h
+system.obj: ../cqueue.h
 system.obj: ../onewire.h
 system.obj: ../i2c.h
 system.obj: ../spi.h
@@ -84,6 +85,8 @@ C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/intrinsics_leg
 C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/string.h:
 
 C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/xlocale/_string.h:
+
+../cqueue.h:
 
 ../onewire.h:
 

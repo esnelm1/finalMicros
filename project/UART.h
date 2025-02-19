@@ -8,6 +8,7 @@
 #define _UART_H_
 
 #include <string.h>
+#include "cqueue.h"
 
 /*******************************************************************************
  * INCLUDE HEADER FILES
@@ -24,10 +25,16 @@
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
-
+typedef struct {
+    char txBuffer[QSIZE];   // Tamaño ajustable según necesidades
+    unsigned char txBufferLength;   // Array para almacenar los datos recibidos
+    unsigned char txBufferIndex;       // ï¿½ndice para rastrear la posiciÃ³n actual en el array
+    unsigned char transmitting;
+} TX_Buffer;
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
+
 
 /*******************************************************************************
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
@@ -35,8 +42,17 @@
 void uart_init(void);
 void uart_set_message(unsigned long);
 void uart_put_char(char message);
-char uart_get_char(void);
+unsigned char uart_get_char(void);
 int getRXStatus(void);
+int getTXStatus(void);
+void uart_send_message(const char* msg, unsigned char len);
+char check_comunicacion();
+void get_setpoint(unsigned char* setpoint);
+void get_histeresis(unsigned char* histeresis);
+void get_intMuestra(unsigned int* int_muestra);
+int recibe_parametros(unsigned char *setPoint, unsigned char *histeresis, unsigned int *intervaloMuestreo);
+void LED_status_cases(int value);
+
 
 /*******************************************************************************
  ******************************************************************************/

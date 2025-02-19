@@ -17,14 +17,11 @@ main.obj: C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdb
 main.obj: ../board.h
 main.obj: ../gpio.h
 main.obj: ../eprom.h
-main.obj: ../statusLed.h
-main.obj: ../barraLed.h
-main.obj: ../calefactor.h
-main.obj: ../temperatura.h
 main.obj: ../commpc.h
 main.obj: ../UART.h
 main.obj: C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/string.h
 main.obj: C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/xlocale/_string.h
+main.obj: ../cqueue.h
 
 ../main.c:
 
@@ -60,14 +57,6 @@ C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdbool.h:
 
 ../eprom.h:
 
-../statusLed.h:
-
-../barraLed.h:
-
-../calefactor.h:
-
-../temperatura.h:
-
 ../commpc.h:
 
 ../UART.h:
@@ -75,4 +64,6 @@ C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdbool.h:
 C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/string.h:
 
 C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/xlocale/_string.h:
+
+../cqueue.h:
 
