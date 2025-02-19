@@ -1,5 +1,8 @@
-#include <msp430.h> 
+#include <msp430.h>
+#include "i2c.h"
 
+
+/*
 #define I2C_PORT_SEL  P1SEL
 #define I2C_PORT_OUT  P1OUT
 #define I2C_PORT_REN  P1REN
@@ -8,14 +11,15 @@
 #define SCL_PIN       BIT6                  // USCI_B0SCL pin on P1.6
 #define SCL_CLOCK_DIV 0x12                  // SCL clock divider
 #define SlaveAddress  0x50
+*/
 
-int PtrTransmit;
+/*int PtrTransmit;
 unsigned char I2CBufferArray[66];
-unsigned char I2CBuffer;
+unsigned char I2CBuffer;*/
 
 // Functions
 
-void I2cInit(void)
+/*void I2cInit(void)
 {
     P1SEL |= SDA_PIN + SCL_PIN;        // Assign I2C pins to USCI_B0
     P1SEL2 |= SDA_PIN + SCL_PIN;
@@ -179,13 +183,15 @@ unsigned char EepromRandomRead(unsigned int Address)
 
     return I2CBuffer;
 
-}
+}*/
 
 int main(void)
 {
     // Configuración del DCO a 1 MHz usando constantes de calibración:
+/*
     BCSCTL1 = CALBC1_1MHZ;  // Configura el rango del DCO
     DCOCTL = CALDCO_1MHZ;   // Ajusta el DCO a 1 MHz
+*/
 
     I2cInit();
 
