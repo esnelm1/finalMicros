@@ -15,6 +15,8 @@ calefactor.obj: C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/includ
 calefactor.obj: C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/sys/_stdint.h
 calefactor.obj: C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdbool.h
 calefactor.obj: ../pwm.h
+calefactor.obj: ../gpio.h
+calefactor.obj: ../board.h
 
 ../calefactor.c:
 
@@ -45,4 +47,8 @@ C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/sys/_stdint.h:
 C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdbool.h:
 
 ../pwm.h:
+
+../gpio.h:
+
+../board.h:
 

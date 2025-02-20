@@ -71,7 +71,6 @@ void oneWire_singleWrite(__uint8_t data){
             timerDelay( DELAY_ZERO);
         }
     }
-
 }
 
 __uint8_t oneWire_singleRead(void){

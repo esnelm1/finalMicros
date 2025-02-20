@@ -31,13 +31,13 @@
 #define PIN_UART_TX   (1<<2) //DO NOT SET WITH PORTNUM2PIN(1,2)
 
 // I2C pins(hardware USCI_B)
-#define PIN_I2C_SCL   (1<<6) //1.6 //DO NOT SET WITH PORTNUM2PIN
-#define PIN_I2C_SDA   (1<<7) //1.7 //DO NOT SET WITH PORTNUM2PIN
+#define SCL_PIN   (1<<6) // USCI_B0SCL pin on P1.6
+#define SDA_PIN   (1<<7) // USCI_B0SCL pin on P1.7
 
 // SPI pins (bit banging with gpio)
-#define PIN_SPI_CLK   PORTNUM2PIN(2,0)// 2.0
-#define PIN_SPI_MOSI   PORTNUM2PIN(2,1) //2.1
-#define PIN_LATCH_ENABLE  PORTNUM2PIN(2,2) //2.2
+#define PIN_SPI_CLK       (1 << 0) // 2.0
+#define PIN_SPI_MOSI      (1 << 1) //2.1
+#define PIN_LATCH_ENABLE  (1 << 2) //2.2
 
 // Led Status pin
 #define LED_STATUS PORTNUM2PIN(2,3) //2.3
@@ -46,10 +46,10 @@
 //#define PIN_LED_GREEN PORTNUM2PIN(2,2)  // Lo DEFINI RECIEN
 
 // PWM PIN
-#define PIN_PWM   (1<<4) //2.4
+#define PIN_PWM   (1 << 5) //1.5
 
 // onewire pins (bit banging with gpio)
-#define PIN_ONEWIRE_DATA    PORTNUM2PIN(1,5)//1.5
+#define PIN_ONEWIRE_DATA    PORTNUM2PIN(1,4)//1.4
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS

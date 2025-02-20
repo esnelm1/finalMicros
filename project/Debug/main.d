@@ -23,6 +23,7 @@ main.obj: ../calefactor.h
 main.obj: ../temperatura.h
 main.obj: ../UART.h
 main.obj: ../cqueue.h
+main.obj: ../i2c.h
 
 ../main.c:
 
@@ -69,4 +70,6 @@ C:/ti/ccs1250/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdbool.h:
 ../UART.h:
 
 ../cqueue.h:
+
+../i2c.h:
 

@@ -9,8 +9,8 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 #include "i2c.h"
-#include <msp430.h>
-
+#include "board.h"
+#include "hardware.h"
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
@@ -28,14 +28,15 @@
  ******************************************************************************/
  static void I2cWriteInit(void);
  static void I2cReadInit(void);
+ static void AckPolling(void);
+ static void EpromByteWrite(unsigned int Address, unsigned char Data);
+ static unsigned char EepromRandomRead(unsigned int Address);
 
 /*******************************************************************************
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
  static unsigned char adr_hi;
  static unsigned char adr_lo;
- static int PtrTransmit;
- static unsigned char I2CBufferArray[66];
  static unsigned char I2CBuffer;
 
 /*******************************************************************************
@@ -43,6 +44,43 @@
  GLOBAL FUNCTION DEFINITIONS
  *******************************************************************************
  ******************************************************************************/
+
+
+ // Función para escribir los parámetros en la EEPROM
+ void eprom_write_parameters(unsigned char setPoint, unsigned char histeresis, unsigned int intervaloMuestreo)
+ {
+     // Escribe setPoint en la dirección 0x0000
+     EpromByteWrite(0x0000, setPoint);
+     AckPolling();
+
+     // Escribe histeresis en la dirección 0x0001
+     EpromByteWrite(0x0001, histeresis);
+     AckPolling();
+
+     // Escribe intervaloMuestreo en dos bytes:
+     // LSB en la dirección 0x0002
+     EpromByteWrite(0x0002, (unsigned char)(intervaloMuestreo & 0xFF));  // LSB
+     AckPolling();
+     // y MSB en la dirección 0x0003
+     EpromByteWrite(0x0003, (unsigned char)((intervaloMuestreo >> 8) & 0xFF));  // MSB
+     AckPolling();
+ }
+
+ // Función para leer los parámetros de la EEPROM
+ void eprom_read_parameters(unsigned char *setPoint, unsigned char *histeresis, unsigned int *intervaloMuestreo)
+ {
+     // Lee setPoint de la dirección 0x0000
+     *setPoint = EepromRandomRead(0x0000);
+
+     // Lee histeresis de la dirección 0x0001
+     *histeresis = EepromRandomRead(0x0001);
+
+     // Lee intervaloMuestreo desde dos direcciones:
+     // LSB de la dirección 0x0002 y MSB de la dirección 0x0003
+     unsigned char lsb = EepromRandomRead(0x0002);
+     unsigned char msb = EepromRandomRead(0x0003);
+     *intervaloMuestreo = (unsigned int)lsb | ((unsigned int)msb << 8);
+ }
 
  void I2cInit(void)
  {
@@ -62,133 +100,7 @@
      UCB0CTL1 &= ~UCSWRST;                    // Clear SW reset, resume operation
  }
 
- void AckPolling(void)
- {
-     while (UCB0STAT & UCBUSY)
-         ;                // Wait until I2C module has finished all operations
-     do
-     {
-         UCB0STAT = 0x00;                        // Clear I2C interrupt flags
-         UCB0CTL1 |= UCTR;               // UCTR=1 => Transmit Mode (R/W bit = 0)
-         UCB0CTL1 &= ~UCTXSTT;
-         UCB0CTL1 |= UCTXSTT;                    // Start condition is generated
-         while (UCB0CTL1 & UCTXSTT)           // Wait until I2CSTT bit is cleared
-         {
-             if (!(UCNACKIFG & UCB0STAT))           // Break out if ACK received
-                 break;
-         }
-         UCB0CTL1 |= UCTXSTP; // Stop condition is generated after slave address was sent
-         while (UCB0CTL1 & UCTXSTP)
-             ;             // Wait until stop bit is reset
-         __delay_cycles(40000);                    // Software delay
-     }
-     while (UCNACKIFG & UCB0STAT);
- }
 
- void EpromByteWrite(unsigned int Address, unsigned char Data)
- {
-
-     while (UCB0STAT & UCBUSY)
-         ;                // Wait until I2C module has finished all operations.
-
-     adr_hi = Address >> 8;                    // Calculate high byte
-     adr_lo = Address & 0xFF;                  // and low byte of address
-
-     I2CBufferArray[2] = adr_hi;               // Store high byte address.
-     I2CBufferArray[1] = adr_lo;               // Store low byte address.
-     I2CBufferArray[0] = Data;
-     PtrTransmit = 2;                          // Set I2CBufferArray Pointer
-
-     I2cWriteInit();                           // write init
-
-     UCB0CTL1 |= UCTXSTT; // Start condition generation => I2C communication is started
-     while (UCB0STAT & UCBUSY)
-         ; // Espera hasta que el módulo termine sus operaciones
-     while (!(IFG2 & UCB0TXIFG))
-         ;
-     UCB0TXBUF = adr_hi; // Load TX buffer
-     while (UCB0STAT & UCNACKIFG)
-         ;
-
-     while (UCB0STAT & UCBUSY)
-         ; // Espera hasta que el módulo termine sus operaciones
-     while (!(IFG2 & UCB0TXIFG))
-         ;
-     UCB0TXBUF = adr_lo; // Load TX buffer
-     while (UCB0STAT & UCNACKIFG)
-         ;
-
-     while (UCB0STAT & UCBUSY)
-         ; // Espera hasta que el módulo termine sus operaciones
-     while (!(IFG2 & UCB0TXIFG))
-         ;
-     UCB0TXBUF = Data; // Load TX buffer
-     while (UCB0STAT & UCNACKIFG)
-         ;
-
-     while (!(IFG2 & UCB0TXIFG))
-         ;
-     IFG2 &= ~UCB0TXIFG;                   // Clear USCI_B0 TX int flag
-     UCB0CTL1 |= UCTXSTP;                      // I2C stop condition
-     while (UCB0CTL1 & UCTXSTP)
-         ;                // Ensure stop condition got sent
-
- }
-
- unsigned char EepromRandomRead(unsigned int Address)
- {
-
-     while (UCB0STAT & UCBUSY)
-         ;                // Wait until I2C module has finished all operations
-
-     adr_hi = Address >> 8;                    // Calculate high byte
-     adr_lo = Address & 0xFF;                  // and low byte of address
-
-     I2CBufferArray[1] = adr_hi;               // Store high byte address.
-     I2CBufferArray[0] = adr_lo;               // Store low byte address.
-     PtrTransmit = 1;                          // Set I2CBufferArray Pointer
-
-     // Write Address first
-
-     I2cWriteInit();
-     UCB0CTL1 |= UCTXSTT; // Start condition generation => I2C communication is started
-     while (UCB0STAT & UCBUSY)
-         ; // Espera hasta que el módulo termine sus operaciones
-     while (!(IFG2 & UCB0TXIFG))
-         ;
-     UCB0TXBUF = adr_hi; // Load TX buffer
-     while (UCB0STAT & UCNACKIFG)
-         ;
-
-     while (UCB0STAT & UCBUSY)
-         ; // Espera hasta que el módulo termine sus operaciones
-     while (!(IFG2 & UCB0TXIFG))
-         ;
-     UCB0TXBUF = adr_lo; // Load TX buffer
-     while (UCB0STAT & UCNACKIFG)
-         ;
-
-     while (!(IFG2 & UCB0TXIFG))
-         ;
-     IFG2 &= ~UCB0TXIFG;                   // Clear USCI_B0 TX int flag
-
-     // Read Data byte
-
-     I2cReadInit();
-
-     UCB0CTL1 |= UCTXSTT;          // Genera condición de inicio
-     while (UCB0CTL1 & UCTXSTT)
-         ;
-     while (UCB0STAT & UCNACKIFG)
-         ;
-     UCB0CTL1 |= UCTXSTP;          // Emite inmediatamente la condición de parada
-     while (!(IFG2 & UCB0RXIFG))
-         ;   // Espera a que se reciba el dato
-     I2CBuffer = UCB0RXBUF;        // Lee el dato
-
-     return I2CBuffer;
-
- }
 
 
 /*******************************************************************************
@@ -212,6 +124,123 @@
 
  }
 
+ static void AckPolling(void)
+  {
+      while (UCB0STAT & UCBUSY)
+          ;                // Wait until I2C module has finished all operations
+      do
+      {
+          UCB0STAT = 0x00;                        // Clear I2C interrupt flags
+          UCB0CTL1 |= UCTR;               // UCTR=1 => Transmit Mode (R/W bit = 0)
+          UCB0CTL1 &= ~UCTXSTT;
+          UCB0CTL1 |= UCTXSTT;                    // Start condition is generated
+          while (UCB0CTL1 & UCTXSTT)           // Wait until I2CSTT bit is cleared
+          {
+              if (!(UCNACKIFG & UCB0STAT))           // Break out if ACK received
+                  break;
+          }
+          UCB0CTL1 |= UCTXSTP; // Stop condition is generated after slave address was sent
+          while (UCB0CTL1 & UCTXSTP)
+              ;             // Wait until stop bit is reset
+          __delay_cycles(40000);                    // Software delay
+      }
+      while (UCNACKIFG & UCB0STAT);
+  }
 
+  static void EpromByteWrite(unsigned int Address, unsigned char Data)
+  {
+
+      while (UCB0STAT & UCBUSY)
+          ;                // Wait until I2C module has finished all operations.
+
+      adr_hi = Address >> 8;                    // Calculate high byte
+      adr_lo = Address & 0xFF;                  // and low byte of address
+
+      I2cWriteInit();                           // write init
+
+      UCB0CTL1 |= UCTXSTT; // Start condition generation => I2C communication is started
+      while (UCB0STAT & UCBUSY)
+          ; // Espera hasta que el módulo termine sus operaciones
+      while (!(IFG2 & UCB0TXIFG))
+          ;
+      UCB0TXBUF = adr_hi; // Load TX buffer
+      while (UCB0STAT & UCNACKIFG)
+          ;
+
+      while (UCB0STAT & UCBUSY)
+          ; // Espera hasta que el módulo termine sus operaciones
+      while (!(IFG2 & UCB0TXIFG))
+          ;
+      UCB0TXBUF = adr_lo; // Load TX buffer
+      while (UCB0STAT & UCNACKIFG)
+          ;
+
+      while (UCB0STAT & UCBUSY)
+          ; // Espera hasta que el módulo termine sus operaciones
+      while (!(IFG2 & UCB0TXIFG))
+          ;
+      UCB0TXBUF = Data; // Load TX buffer
+      while (UCB0STAT & UCNACKIFG)
+          ;
+
+      while (!(IFG2 & UCB0TXIFG))
+          ;
+      IFG2 &= ~UCB0TXIFG;                   // Clear USCI_B0 TX int flag
+      UCB0CTL1 |= UCTXSTP;                      // I2C stop condition
+      while (UCB0CTL1 & UCTXSTP)
+          ;                // Ensure stop condition got sent
+
+  }
+
+ static unsigned char EepromRandomRead(unsigned int Address)
+  {
+
+      while (UCB0STAT & UCBUSY)
+          ;                // Wait until I2C module has finished all operations
+
+      adr_hi = Address >> 8;                    // Calculate high byte
+      adr_lo = Address & 0xFF;                  // and low byte of address
+
+      // Write Address first
+
+      I2cWriteInit();
+      UCB0CTL1 |= UCTXSTT; // Start condition generation => I2C communication is started
+      while (UCB0STAT & UCBUSY)
+          ; // Espera hasta que el módulo termine sus operaciones
+      while (!(IFG2 & UCB0TXIFG))
+          ;
+      UCB0TXBUF = adr_hi; // Load TX buffer
+      while (UCB0STAT & UCNACKIFG)
+          ;
+
+      while (UCB0STAT & UCBUSY)
+          ; // Espera hasta que el módulo termine sus operaciones
+      while (!(IFG2 & UCB0TXIFG))
+          ;
+      UCB0TXBUF = adr_lo; // Load TX buffer
+      while (UCB0STAT & UCNACKIFG)
+          ;
+
+      while (!(IFG2 & UCB0TXIFG))
+          ;
+      IFG2 &= ~UCB0TXIFG;                   // Clear USCI_B0 TX int flag
+
+      // Read Data byte
+
+      I2cReadInit();
+
+      UCB0CTL1 |= UCTXSTT;          // Genera condición de inicio
+      while (UCB0CTL1 & UCTXSTT)
+          ;
+      while (UCB0STAT & UCNACKIFG)
+          ;
+      UCB0CTL1 |= UCTXSTP;          // Emite inmediatamente la condición de parada
+      while (!(IFG2 & UCB0RXIFG))
+          ;   // Espera a que se reciba el dato
+      I2CBuffer = UCB0RXBUF;        // Lee el dato
+
+      return I2CBuffer;
+
+  }
 
 //

@@ -38,22 +38,23 @@
  *******************************************************************************
  ******************************************************************************/
 void pwm_init(void){
-    P2SEL   |= PIN_PWM; //TA1.2 function
-    P2SEL2  |= PIN_PWM;
-    P2DIR   |= PIN_PWM; //output
+//    P1SEL   |= PIN_PWM; //TA1.2 function
+//    P1SEL2  &= ~PIN_PWM;
+    P1DIR   |= PIN_PWM; //output
+//
+//    TA0CCR0 = 1000-1;       // Periodo
+//    TA0CCTL1 = OUTMOD_7;      // Modo de salida: Reset/Set
+//    TA0CCR1 = 10;            // dutycicle incial (1%)
+//    TA0CTL = TASSEL_2 | MC_1; // Fuente SMCLK, modo Up
 
-    TA1CCR0 = 1000;       // Periodo
-    TA1CCTL2 = OUTMOD_7;      // Modo de salida: Reset/Set
-    TA1CCR2 = 10;            // dutycicle incial (1%)
-    TA1CTL = TASSEL_2 + MC_1; // Fuente SMCLK, modo Up 
 }
-void pwm_setDC(uint8_t duty_cicle){
-    TA1CCR2 = duty_cicle;
+void pwm_setDC(uint16_t duty_cicle){
+    TA0CCR1 = duty_cicle;
 }
 
 int pwm_getDC(void){
     
-    return TA1CCR2;
+    return TA0CCR2;
 }
 /*******************************************************************************
  LOCAL FUNCTION DEFINITIONS

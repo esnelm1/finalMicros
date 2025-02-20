@@ -7,7 +7,6 @@
 /*******************************************************************************
  * INCLUDE HEADER FILES
  ******************************************************************************/
-
 #include "system.h"
 #include "board.h"
 #include "hardware.h"
@@ -18,8 +17,6 @@
 #include "onewire.h"
 #include "i2c.h"
 #include "spi.h"
-
-
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE

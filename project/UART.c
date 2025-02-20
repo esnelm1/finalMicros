@@ -21,7 +21,11 @@
 #define UART_DELAY_MS 10
 #define MAX_SCALE 255
 #define MAX_VOLTAJE 3300
-#define END_BYTE 0x46 //una F
+
+#define LED_NORMAL 1
+#define LED_ERROR 0
+
+
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
@@ -33,15 +37,16 @@ TX_Buffer Tx_buffer = {.txBufferLength = 0, .txBufferIndex = 0, .transmitting = 
 /*******************************************************************************
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
-static unsigned char rxdata;
 static void get_setpoint(unsigned char* sp);
 static void get_histeresis(unsigned char* h);
 static void get_intMuestra(unsigned int* im);
 static int getRXStatus(void);
 static int getTXStatus(void);
+static void LED_status_cases(int value);
 
+char valor = 0;
+char *rx_datosFlag = &valor;// Puntero a entero
 
-static char rx_datosFlag = 0;
 /*******************************************************************************
  *******************************************************************************
  GLOBAL FUNCTION DEFINITIONS
@@ -93,6 +98,7 @@ void uart_put_char(char message)
 
 unsigned char uart_get_char(void)
 {
+    unsigned char rxdata;
     if (getRXStatus()){
         PullQueue(&rxdata);
         return rxdata;
@@ -102,31 +108,25 @@ unsigned char uart_get_char(void)
 
 char check_comunicacion(void)
 {
-    return rx_datosFlag;  // Establece comunicacion con Matlab
+    if (*rx_datosFlag == 1) {
+        LED_status_cases(LED_NORMAL);
+    } else if ((*rx_datosFlag == 0)) {
+        LED_status_cases(LED_ERROR);
+    }
+
+    return *rx_datosFlag;  // Establece comunicacion con Matlab
 }
 
-void LED_status_cases(int value){
-    switch (value)
-        {
-        case 0: //funcionamiento error
-            gpioWrite(LED_STATUS,LOW);
-            break;
 
-        case 1: //funcionamiento normal
-            gpioWrite(LED_STATUS,HIGH);
-            break;
-        }
-}
 
 int recibe_parametros(unsigned char *sp, unsigned char *h, unsigned int *im)
 {
-    // Se esperan4 bytes en el buffer
-    if (rx_datosFlag)
+    if (*rx_datosFlag == 1) // Se esperan bytes en el buffer
     {
         get_setpoint(sp);
         get_histeresis(h);
         get_intMuestra(im);
-        rx_datosFlag = 0;
+        *rx_datosFlag = 0;
         return 1;
     }
     return 0;
@@ -184,6 +184,19 @@ static int getTXStatus(void)
     return (IFG2 & TX_EMPTY);
 }
 
+static void LED_status_cases(int value){
+    switch (value)
+        {
+        case 0: //funcionamiento error
+            gpioWrite(LED_STATUS,LOW);
+            break;
+
+        case 1: //funcionamiento normal
+            gpioWrite(LED_STATUS,HIGH);
+            break;
+        }
+}
+
 //INTERRUPT TX
 #pragma vector = USCIAB0TX_VECTOR
 __interrupt void uart_tx_isr(void)
@@ -208,11 +221,18 @@ __interrupt void uart_rx_isr(void)
 {
     if (IFG2 & RX_FULL)
     {
-        if (RX_BUFFER == END_BYTE){
-            rx_datosFlag = 1;
-        } else {
+        if (RX_BUFFER == CONECTED)
+        {
+            *rx_datosFlag = 1;   //Si recibe un 1 DE RX (END_BYTE) se conecto
+        }
+        else if (RX_BUFFER == DISCONNECT)
+        {
+            *rx_datosFlag = 2;   // Esta desconectado
+        }
+        else
+        {
             PushQueue(RX_BUFFER);
-            rx_datosFlag = 0;
+
         }
         IFG2 &= ~RX_FULL; //  se limpia el flag de RX_FULL
     }

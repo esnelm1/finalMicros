@@ -9,11 +9,13 @@
  ******************************************************************************/
 #include "calefactor.h"
 #include "pwm.h"
+#include "gpio.h"
+#include "board.h"
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 #define POTENCIA_OFF 0
-#define POTENCIA_ON 500 //duty cicle de 50%
+#define POTENCIA_ON ((uint16_t) 100) //duty cicle de 50%
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -30,7 +32,6 @@
 /*******************************************************************************
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
-static
 
 /*******************************************************************************
  *******************************************************************************
@@ -42,7 +43,9 @@ void calefactor_setPotencia(uint16_t potencia){
 }
 
 void calefactor_turnOn(void){
-    pwm_setDC(POTENCIA_ON);
+   // pwm_setDC(POTENCIA_ON);
+    gpioWrite(PIN_PWM,HIGH);
+
 }
 
 

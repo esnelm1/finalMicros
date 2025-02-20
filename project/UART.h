@@ -19,6 +19,8 @@
 #define FINISH_MESSAGE 13   //ASCII for finish transmition --> CR (Carriage return)
 #define MAX_MESSAGES 15
 
+#define CONECTED  0xff
+#define DISCONNECT 0xfe
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
@@ -43,7 +45,6 @@ unsigned char uart_get_char(void);
 void uart_send_message(const char* msg, unsigned char len);
 char check_comunicacion();
 int recibe_parametros(unsigned char *setPoint, unsigned char *histeresis, unsigned int *intervaloMuestreo);
-void LED_status_cases(int value);
 void print_status(uint16_t temp, char heater);
 /*******************************************************************************
  ******************************************************************************/
